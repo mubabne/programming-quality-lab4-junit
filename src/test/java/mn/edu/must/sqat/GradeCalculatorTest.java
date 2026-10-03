@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 @DisplayName("GradeCalculator классын нэгжийн тестүүд")
 class GradeCalculatorTest {
 
@@ -132,5 +134,63 @@ class GradeCalculatorTest {
                 () -> calc.totalScore(10, lab, 10, 10, 30));
 
         assertEquals("Лаб ба бие даалт 0-40 хооронд байх ёстой: 41.0", aldaa.getMessage());
+    }
+
+    @ParameterizedTest(name = "{0} оноо → {1}")
+    @CsvSource({"95,A", "90,A", "89.99,B", "80,B", "79.99,C", "70,C", "69.99,D", "60,D", "59.99,F", "0,F", "100,A"})
+    @DisplayName("letterGrade-ийн хязгаарын утгууд")
+    void letterGradeHyazgaaruud(double onoo, String huleegdeh) {
+        GradeCalculator tootsooluur = new GradeCalculator();
+
+        String dun = tootsooluur.letterGrade(onoo);
+
+        assertEquals(huleegdeh, dun);
+    }
+
+    @ParameterizedTest(name = "{0} оноо буруу оролт")
+    @ValueSource(doubles = {-1, -0.01, 100.01, 101, Double.NaN})
+    @DisplayName("letterGrade хүрээнээс гадуурх утгад exception шиднэ")
+    void letterGradeBuruuOrolt(double onoo) {
+        GradeCalculator tootsooluur = new GradeCalculator();
+
+        assertThrows(IllegalArgumentException.class, () -> tootsooluur.letterGrade(onoo));
+    }
+
+    @ParameterizedTest(name = "{0}+{1}+{2}+{3}+{4} = {5}")
+    @CsvSource({
+            "10, 40, 10, 10, 30, 100",
+            "0, 0, 0, 0, 0, 0",
+            "8, 32.5, 7, 9, 21, 77.5",
+            "10, 40, 10, 10, 0, 70",
+            "5.5, 20.25, 3, 4, 15, 47.75"
+    })
+    @DisplayName("totalScore хүчинтэй утгуудын нийлбэрийг зөв тооцно")
+    void totalScoreZuvNiilber(double irts, double lab, double soril1, double soril2, double shalgalt, double huleegdeh) {
+        GradeCalculator tootsooluur = new GradeCalculator();
+
+        double niit = tootsooluur.totalScore(irts, lab, soril1, soril2, shalgalt);
+
+        assertEquals(huleegdeh, niit, 1e-9);
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}, {1}, {2}, {3}, {4}")
+    @CsvSource({
+            "-0.01, 40, 10, 10, 30",
+            "10.01, 40, 10, 10, 30",
+            "10, -1, 10, 10, 30",
+            "10, 40.5, 10, 10, 30",
+            "10, 40, -2, 10, 30",
+            "10, 40, 11, 10, 30",
+            "10, 40, 10, -3, 30",
+            "10, 40, 10, 12, 30",
+            "10, 40, 10, 10, -0.5",
+            "10, 40, 10, 10, 31"
+    })
+    @DisplayName("totalScore хэсэг бүрийн сөрөг ба хэтэрсэн утгад exception шиднэ")
+    void totalScoreBuruuOrolt(double irts, double lab, double soril1, double soril2, double shalgalt) {
+        GradeCalculator tootsooluur = new GradeCalculator();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> tootsooluur.totalScore(irts, lab, soril1, soril2, shalgalt));
     }
 }
